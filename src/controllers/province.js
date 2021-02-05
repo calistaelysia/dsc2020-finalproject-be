@@ -8,7 +8,6 @@ const pool = require('../config/db');
 const getProvince = async (req, res) => {
     try {
         const {provinceId} = req.params;
-        console.log(req.params);
 
         const conn = await pool.getConnection();
         let query = "", qTotal = "", provinces, totalData;
@@ -18,22 +17,22 @@ const getProvince = async (req, res) => {
             [provinces] = await conn.execute(query, [provinceId]);
             
             await conn.release();
-            return res.status(200).send({status: "true", message: "Fetching data success", data: provinces[0]});
+            return res.send({status: "true", message: "Fetching data success", data: provinces[0]});
         } else {
             query = `SELECT name, recovered, death, positive, url FROM provinces WHERE deleted_at IS NULL`;
             [provinces] = await conn.execute(query);
-            // await conn.release();
+            
             qTotal = `SELECT COUNT(id) as totalData FROM provinces WHERE deleted_at IS NULL`;
             [totalData] = await conn.execute(qTotal);
             await conn.release();
-            return res.status(200).send({status: "true", totalData: totalData[0].totalData, message: "Fetching data success", data: provinces});
+            return res.send({status: "true", totalData: totalData[0].totalData, message: "Fetching data success", data: provinces});
         }
 
     } catch (error) {
         if (provinceId !== undefined){
-            return res.status(400).send({status: "false", message: "Id not found"});
+            return res.send({status: "false", message: "Fetching data failed"});
         } else {
-            return res.status(400).send({status: "false", message: "Fetching data failed"});
+            return res.send({status: "false", message: "Id not found"});
         }
     }
 }
@@ -65,7 +64,7 @@ const addProvince = async (req, res) => {
         return res.send({status: "true", message: "Storing data success", stored: req.body});
 
     } catch (error) {
-        return res.status(400).send({status: "false", message: "Storing data failed"});
+        return res.send({status: "false", message: "Storing data failed", error: error});
     }
 }
 
@@ -89,8 +88,7 @@ const updateProvince = async (req, res) => {
         return res.send({status: "true", message: "Updating data success", before: resBefore[0], after: req.body});
     } catch (error) {
         if (provinceId !== undefined){
-            return res.send({status: "true", message: "Updating data failed"});
-            // return res.send({status: "true", message: error});
+            return res.send({status: "true", message: "Updating data failed", error: error});
         } else{
             return res.send({status: "true", message: "Id not found"});
         }
@@ -117,7 +115,7 @@ const deleteProvince = async (req, res) => {
         return res.send({status: "true", message: "Destroy data success", deleted: resData});
     } catch (error) {
         if (provinceId !== undefined){
-            return res.send({status: "true", message: "Destroy data failed"});
+            return res.send({status: "true", message: "Destroy data failed", error: error});
         } else{
             return res.send({status: "true", message: "Id not found"});
         }
